@@ -369,7 +369,7 @@ export function Wallet({
                         <SidebarLight
                             availableAccounts={accountExists && availableAccounts}
                         />
-                        <ActivitiesWrapper />
+                        <ActivitiesWrapper accountId={accountId} />
                     </div>
                 </div>
                 {linkdropAmount !== '0' && (
@@ -494,6 +494,7 @@ const FungibleTokens = ({ accountExists }) => {
                         tokens={fungibleTokens}
                         currentLanguage={currentLanguage}
                         showFiatPrice
+                        isLoading={tokensLoading}
                     />
                 </>
             )}

@@ -758,12 +758,17 @@ export const refreshAccount =
 
         dispatch(setLocalStorage(wallet.accountId));
         dispatch(activeAccountActions.setAccountId({ accountId: wallet.accountId }));
+        
+        // 优先加载账户基本信息，延迟加载余额
         await dispatch(
             refreshAccountOwner(selectFlowLimitationAccountData(getState()))
         ).unwrap();
 
+        // 延迟500ms加载余额，强制显示骨架屏效果
         if (!basicData && !selectFlowLimitationAccountBalance(getState())) {
-            dispatch(getBalance('', selectFlowLimitationAccountData(getState())));
+            setTimeout(() => {
+                dispatch(getBalance('', selectFlowLimitationAccountData(getState())));
+            }, 500);
         }
     };
 

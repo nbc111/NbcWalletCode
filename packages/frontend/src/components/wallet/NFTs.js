@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Translate } from 'react-localize-redux';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -61,6 +61,24 @@ const StyledContainer = styled.div`
                 background: #efefef;
             }
         }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+            height: 20px;
+            margin: 8px 0;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
     }
 `;
 
@@ -73,6 +91,8 @@ const StyledLoadingContainer = styled.div`
 
 const NFTs = ({ accountId }) => {
     const dispatch = useDispatch();
+    const [shouldLoadNFTs, setShouldLoadNFTs] = useState(false);
+    
     const tokens = useSelector((state) =>
         selectTokensWithMetadataForAccountId(state, { accountId })
     );
@@ -82,7 +102,12 @@ const NFTs = ({ accountId }) => {
 
     useEffect(() => {
         if (accountId) {
-            dispatch(nftActions.fetchNFTs({ accountId }));
+            // 延迟2秒加载NFT，强制显示骨架屏效果
+            const timer = setTimeout(() => {
+                setShouldLoadNFTs(true);
+                dispatch(nftActions.fetchNFTs({ accountId }));
+            }, 2000);
+            return () => clearTimeout(timer);
         }
     }, [accountId]);
 
@@ -90,6 +115,41 @@ const NFTs = ({ accountId }) => {
         (tokenDetails) =>
             tokenDetails.ownedTokensMetadata && tokenDetails.ownedTokensMetadata.length
     );
+
+    // NFT骨架屏
+    const NFTSkeleton = () => (
+        <div>
+            <div style={{ 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'loading 1.5s infinite',
+                borderRadius: '4px',
+                width: '40%', 
+                height: '24px', 
+                marginBottom: '20px' 
+            }}></div>
+            {[1, 2].map(i => (
+                <div key={i} style={{ 
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'loading 1.5s infinite',
+                    borderRadius: '8px',
+                    width: '100%', 
+                    height: '120px', 
+                    marginBottom: '15px' 
+                }}></div>
+            ))}
+        </div>
+    );
+
+    if (!shouldLoadNFTs) {
+        return (
+            <StyledContainer>
+                <NFTSkeleton />
+            </StyledContainer>
+        );
+    }
+
     if (isLoadingTokens) {
         return (
             <StyledLoadingContainer>

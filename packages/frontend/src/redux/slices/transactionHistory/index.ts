@@ -74,17 +74,20 @@ const transactionHistorySlice = createSlice({
 });
 
 export async function fetchAllMetaData(state, allReceiver: string[]) {
+    // 只获取前10个接收者的元数据，减少API请求
+    const limitedReceivers = allReceiver.slice(0, 10);
+    
     const res: any = await Promise.allSettled([
-        ...allReceiver.map((contractName) => {
+        ...limitedReceivers.map((contractName) => {
             return getCachedContractMetadataOrFetch(contractName, state);
         }),
-        ...allReceiver.map((contractName) => {
+        ...limitedReceivers.map((contractName) => {
             return NonFungibleTokens.getMetadata(contractName);
         }),
     ]);
     const metas: { [key: string]: IMetaData } = {};
-    allReceiver.forEach((receiverId, i) => {
-        metas[receiverId] = res[i]?.value || res[i + allReceiver.length]?.value;
+    limitedReceivers.forEach((receiverId, i) => {
+        metas[receiverId] = res[i]?.value || res[i + limitedReceivers.length]?.value;
     });
     return metas;
 }

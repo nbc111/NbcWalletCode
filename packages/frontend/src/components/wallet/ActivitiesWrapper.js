@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Translate } from 'react-localize-redux';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -87,32 +87,103 @@ const StyledContainer = styled.div`
             }
         }
     }
+
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+        height: 20px;
+        margin: 8px 0;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
 `;
 
-const ActivitiesWrapper = () => {
+const ActivitiesWrapper = ({ accountId }) => {
     const dispatch = useDispatch();
+    const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
 
-    const accountId = useSelector(selectAccountId);
+    // 如果没有传入 accountId，则从 Redux 获取
+    const accountIdFromRedux = useSelector(selectAccountId);
+    const finalAccountId = accountId || accountIdFromRedux;
     const { transactions, isLoading } = useSelector(transactionHistorySelector);
 
     useEffect(() => {
-        if (accountId) {
-            dispatch(transactionHistoryActions.fetchTransactions({ accountId, page: 1 }));
+        if (finalAccountId) {
+            // 延迟1.5秒加载交易历史，优先渲染主内容
+            const timer = setTimeout(() => {
+                setShouldLoadTransactions(true);
+                dispatch(transactionHistoryActions.fetchTransactions({ accountId: finalAccountId, page: 1 }));
+            }, 1500);
+            return () => clearTimeout(timer);
         }
-    }, [accountId]);
-    const displayedTransactions = [...transactions].slice(0, 10);
+    }, [finalAccountId]);
 
+    const displayedTransactions = [...transactions].slice(0, 5); // 减少首屏显示的交易数量
+
+    // 骨架屏组件
+    const TransactionSkeleton = () => (
+        <div>
+            <div style={{ 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'loading 1.5s infinite',
+                borderRadius: '4px',
+                width: '60%', 
+                height: '24px', 
+                marginBottom: '15px' 
+            }}></div>
+            {[1, 2, 3].map(i => (
+                <div key={i} style={{ 
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'loading 1.5s infinite',
+                    borderRadius: '4px',
+                    width: '100%', 
+                    height: '60px', 
+                    marginBottom: '8px' 
+                }}></div>
+            ))}
+        </div>
+    );
+
+    // 添加调试信息
+    console.log('ActivitiesWrapper - shouldLoadTransactions:', shouldLoadTransactions);
+    console.log('ActivitiesWrapper - finalAccountId:', finalAccountId);
+    console.log('ActivitiesWrapper - accountId prop:', accountId);
+    
     return (
         <StyledContainer>
-            <h2 className={classNames({ dots: isLoading })}>
+            <h2 className={classNames({ dots: isLoading && shouldLoadTransactions })}>
                 <Translate id='dashboard.activity' />
             </h2>
-            <GroupedTransactions transactions={displayedTransactions} />
-            {transactions?.length === 0 && !isLoading && (
-                <div className='no-activity'>
-                    <Translate id='dashboard.noActivity' />
+            
+            {!shouldLoadTransactions ? (
+                <div>
+                    <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>
+                        🔄 显示交易历史骨架屏 (5秒后加载真实数据)
+                    </div>
+                    <TransactionSkeleton />
                 </div>
+            ) : (
+                <>
+                    <GroupedTransactions transactions={displayedTransactions} />
+                    {transactions?.length === 0 && !isLoading && (
+                        <div className='no-activity'>
+                            <Translate id='dashboard.noActivity' />
+                        </div>
+                    )}
+                </>
             )}
+            
             <TransactionItemModal />
             <FormButton
                 color='gray-blue'
