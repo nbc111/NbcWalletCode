@@ -127,7 +127,7 @@ const ActivitiesWrapper = ({ accountId }) => {
         }
     }, [finalAccountId]);
 
-    const displayedTransactions = [...transactions].slice(0, 5); // 减少首屏显示的交易数量
+    const displayedTransactions = [...transactions].slice(0, 3); // 减少首屏显示的交易数量
 
     // 骨架屏组件
     const TransactionSkeleton = () => (

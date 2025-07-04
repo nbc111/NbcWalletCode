@@ -102,12 +102,9 @@ const NFTs = ({ accountId }) => {
 
     useEffect(() => {
         if (accountId) {
-            // 延迟2秒加载NFT，强制显示骨架屏效果
-            const timer = setTimeout(() => {
-                setShouldLoadNFTs(true);
-                dispatch(nftActions.fetchNFTs({ accountId }));
-            }, 2000);
-            return () => clearTimeout(timer);
+            // 立即开始加载NFT，但显示骨架屏
+            setShouldLoadNFTs(true);
+            dispatch(nftActions.fetchNFTs({ accountId }));
         }
     }, [accountId]);
 
@@ -142,19 +139,12 @@ const NFTs = ({ accountId }) => {
         </div>
     );
 
-    if (!shouldLoadNFTs) {
+    // 如果正在加载且没有数据，显示骨架屏
+    if (isLoadingTokens && (!tokens || tokens.length === 0)) {
         return (
             <StyledContainer>
                 <NFTSkeleton />
             </StyledContainer>
-        );
-    }
-
-    if (isLoadingTokens) {
-        return (
-            <StyledLoadingContainer>
-                <LoadingDots />
-            </StyledLoadingContainer>
         );
     }
 

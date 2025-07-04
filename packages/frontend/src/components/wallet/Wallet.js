@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Translate } from 'react-localize-redux';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -408,12 +408,20 @@ const FungibleTokens = ({ accountExists }) => {
     const allowedTokens = useSelector(selectAllowedTokens);
     const fungibleTokens = useSortedTokens(allowedTokens);
     const currentLanguage = getCurrentLanguage();
-    // const totalAmount = getTotalBalanceInFiat(fungibleTokens, currentLanguage);
+    const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
 
     const accountId = useSelector(selectAccountId);
     const tokensLoading = useSelector((state) =>
         selectTokensLoading(state, { accountId })
     );
+
+    // 延迟1秒加载token数据，优先显示骨架屏
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShouldLoadTokens(true);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
 
     const zeroBalanceAccount = accountExists === false;
     const currentFungibleTokens = fungibleTokens[0];
@@ -421,17 +429,57 @@ const FungibleTokens = ({ accountExists }) => {
         zeroBalanceAccount &&
         fungibleTokens?.length === 1 &&
         currentFungibleTokens?.onChainFTMetadata?.symbol === 'NBC';
+
+    // Token骨架屏
+    const TokenSkeleton = () => (
+        <div>
+            <div style={{ 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'loading 1.5s infinite',
+                borderRadius: '4px',
+                width: '80%', 
+                height: '48px', 
+                margin: '40px auto 10px auto' 
+            }}></div>
+            <div style={{ 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'loading 1.5s infinite',
+                borderRadius: '4px',
+                width: '60%', 
+                height: '20px', 
+                margin: '0 auto 30px auto' 
+            }}></div>
+            <div style={{ 
+                background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'loading 1.5s infinite',
+                borderRadius: '4px',
+                width: '70%', 
+                height: '24px', 
+                margin: '0 auto 20px auto' 
+            }}></div>
+        </div>
+    );
+
     return (
         <>
-            <div className='total-balance'>
-                <Textfit mode='single' max={48}>
-                    <AllTokensTotalBalanceUSD allFungibleTokens={fungibleTokens} />
-                </Textfit>
-            </div>
-            <div className='sub-title balance'>
-                <Translate id='wallet.availableBalance' />{' '}
-                <Tooltip translate='availableBalanceInfo' />
-            </div>
+            {!shouldLoadTokens ? (
+                <TokenSkeleton />
+            ) : (
+                <>
+                    <div className='total-balance'>
+                        <Textfit mode='single' max={48}>
+                            <AllTokensTotalBalanceUSD allFungibleTokens={fungibleTokens} />
+                        </Textfit>
+                    </div>
+                    <div className='sub-title balance'>
+                        <Translate id='wallet.availableBalance' />{' '}
+                        <Tooltip translate='availableBalanceInfo' />
+                    </div>
+                </>
+            )}
             <div className='buttons'>
                 <FormButton
                     color='dark-gray'
@@ -486,7 +534,7 @@ const FungibleTokens = ({ accountExists }) => {
             {!hideFungibleTokenSection && (
                 <>
                     <div className='sub-title tokens'>
-                        <span className={classNames({ dots: tokensLoading })}>
+                        <span className={classNames({ dots: tokensLoading && shouldLoadTokens })}>
                             <Translate id='wallet.yourPortfolio' />
                         </span>
                     </div>
@@ -494,7 +542,7 @@ const FungibleTokens = ({ accountExists }) => {
                         tokens={fungibleTokens}
                         currentLanguage={currentLanguage}
                         showFiatPrice
-                        isLoading={tokensLoading}
+                        isLoading={tokensLoading && shouldLoadTokens}
                     />
                 </>
             )}

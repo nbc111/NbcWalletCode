@@ -764,7 +764,7 @@ export const refreshAccount =
             refreshAccountOwner(selectFlowLimitationAccountData(getState()))
         ).unwrap();
 
-        // 延迟500ms加载余额，强制显示骨架屏效果
+        // 延迟500ms加载余额，优先渲染主内容
         if (!basicData && !selectFlowLimitationAccountBalance(getState())) {
             setTimeout(() => {
                 dispatch(getBalance('', selectFlowLimitationAccountData(getState())));
