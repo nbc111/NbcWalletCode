@@ -16,6 +16,7 @@ import SidebarLight from './SidebarLight';
 import Tokens from './Tokens';
 import { ZeroBalanceAccountImportedModal } from './ZeroBalanceAccountImportedModal';
 import getCurrentLanguage from '../../hooks/getCurrentLanguage';
+import { usePerformanceMonitor } from '../../hooks/usePerformanceMonitor';
 import { selectPasswordProtectionSlice } from '../../redux/slices/passwordProtectedWallet/passwordProtectedWallet';
 import classNames from '../../utils/classNames';
 import { SHOW_NETWORK_BANNER } from '../../utils/wallet';
@@ -318,6 +319,9 @@ export function Wallet({
     userRecoveryMethods,
 }) {
     const { dataStatus } = useSelector(selectPasswordProtectionSlice);
+    
+    // 性能监控
+    usePerformanceMonitor('Wallet', true);
 
     return (
         <div>

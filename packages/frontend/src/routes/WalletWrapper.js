@@ -26,6 +26,7 @@ import {
     actions as recoveryMethodsActions,
     selectRecoveryMethodsByAccountId,
 } from '../redux/slices/recoveryMethods';
+import { useDelayedLoad } from '../hooks/useDelayedLoad';
 
 const { setLinkdropAmount } = linkdropActions;
 const { setCreateFromImplicitSuccess, setCreateCustomName } = createFromImplicitActions;
@@ -48,16 +49,20 @@ const WalletWrapper = ({ tab, setTab }) => {
         selectRecoveryMethodsByAccountId(state, { accountId })
     );
 
+    // 延迟2秒加载recovery methods，减少首屏请求
+    const shouldLoadRecoveryMethods = useDelayedLoad(2000, !!accountId);
+
     useEffect(() => {
         if (accountId) {
             Mixpanel.identify(Mixpanel.get_distinct_id());
             Mixpanel.people.set({ relogin_date: new Date().toString() });
 
-            if (userRecoveryMethods.length === 0) {
+            // 只在延迟加载启用且没有数据时加载recovery methods
+            if (shouldLoadRecoveryMethods && userRecoveryMethods.length === 0) {
                 dispatch(fetchRecoveryMethods({ accountId }));
             }
         }
-    }, [accountId]);
+    }, [accountId, shouldLoadRecoveryMethods]);
 
     return (
         <Wallet
